@@ -1,16 +1,16 @@
 const int POT_PIN = A0; 
-const int DCC_SIGNAL_PIN_MAIN = 5;
+const int SIGNAL_PIN = 10;
 
-int potValue = 0;  // variable to store the value coming from the sensor
+int potValue = 0;
 
 void setup() {
-  pinMode(DCC_SIGNAL_PIN_MAIN, OUTPUT);
+  pinMode(SIGNAL_PIN, OUTPUT);
 }
 
 void loop() {
   potValue = analogRead(POT_PIN);
-  digitalWrite(DCC_SIGNAL_PIN_MAIN, HIGH);
+  digitalWrite(SIGNAL_PIN, HIGH);
   delay(potValue);
-  digitalWrite(DCC_SIGNAL_PIN_MAIN, LOW);
+  digitalWrite(SIGNAL_PIN, LOW);
   delay(potValue);
 }
