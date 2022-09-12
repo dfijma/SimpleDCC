@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
 const int POT_PIN = A0; 
-const int TIMER_PIN = 10; // timer 1, OC1B
+const int SIGNAL_PIN = 10; // timer 1, OC1B
 
 const int DIRECTION_MOTOR_CHANNEL_PIN_A = 12; // not used, but disable to prevent short cut
 const int SPEED_MOTOR_CHANNEL_PIN_A = 3;
@@ -14,7 +14,7 @@ void setup() {
   
   disableDirectionOutput();
 
-  pinMode(TIMER_PIN, OUTPUT);
+  pinMode(SIGNAL_PIN, OUTPUT);
   pinMode(SPEED_MOTOR_CHANNEL_PIN_A, OUTPUT);  
   pinMode(BRAKE_MOTOR_CHANNEL_PIN_A, OUTPUT);
 
