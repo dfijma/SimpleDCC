@@ -1,13 +1,15 @@
 #include <Arduino.h>
 
-const int POT_PIN = A0; 
+const int POT_PIN_FREQ = A0; 
+const int POT_PIN_DUTY = A1; 
 const int SIGNAL_PIN = 10; // timer 1, OC1B
 
 const int DIRECTION_MOTOR_CHANNEL_PIN_A = 12; // not used, but disable to prevent short cut
 const int SPEED_MOTOR_CHANNEL_PIN_A = 3;
 const int BRAKE_MOTOR_CHANNEL_PIN_A = 9;
 
-int potValue = 0;  // variable to store the value coming from the sensor
+int freqPot = 0;  // variable to store the value coming from the sensor
+int dutyPot = 0;  // variable to store the value coming from the sensor
 
 void setup() {
   Serial.begin(115200);
@@ -23,7 +25,9 @@ void setup() {
 }
 
 void loop() {
-  potValue = analogRead(POT_PIN);
+  freqPot = analogRead(POT_PIN_FREQ);
+  dutyPot = analogRead(POT_PIN_DUTY);
+  Serial.println(dutyPot);
 }
 
 void powerOn() {
@@ -72,7 +76,8 @@ ISR(TIMER1_COMPB_vect) {
 }
 
 void setCycle() {
-    long full = map(potValue, 0, 1023, 0, 65535); 
+    long full = map(freqPot, 0, 1023, 0, 65535); 
+    long duty = map(dutyPot, 0, 1023, 1, 9);
     OCR1A = full;
-    OCR1B = full / 2;
+    OCR1B = full * (10-duty) / 10;
 }
