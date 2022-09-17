@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+#include "RefreshBuffer.h"
+
 const int POT_PIN_FREQ = A0; 
 const int POT_PIN_DUTY = A1; 
 const int SIGNAL_PIN = 10; // timer 1, OC1B
@@ -11,15 +13,23 @@ const int BRAKE_MOTOR_CHANNEL_PIN_A = 9;
 int freqPot = 0;  // variable to store the value coming from the sensor
 int dutyPot = 0;  // variable to store the value coming from the sensor
 
+// The refresh buffer
+RefreshBuffer buffer;
+
+const int SLOT = 0;
+const int LOCO = 77;
+
 void setup() {
   Serial.begin(115200);
-  
   disableDirectionOutput();
 
   pinMode(SIGNAL_PIN, OUTPUT);
   pinMode(SPEED_MOTOR_CHANNEL_PIN_A, OUTPUT);  
   pinMode(BRAKE_MOTOR_CHANNEL_PIN_A, OUTPUT);
 
+  //buffer.slot(SLOT).update().withThrottleCmd(LOCO, 0, true, 0);
+  buffer.slot_update_withTrottleCmd(LOCO, 0, true, 0);
+  
   configureTimer1();
   powerOn();
 }
@@ -27,7 +37,10 @@ void setup() {
 void loop() {
   freqPot = analogRead(POT_PIN_FREQ);
   dutyPot = analogRead(POT_PIN_DUTY);
-  Serial.println(dutyPot);
+  long speed = map(freqPot, 15, 1023, 0, 126);
+  
+  // buffer.slot(SLOT).update().withThrottleCmd(LOCO, speed, true, 0);
+  buffer.slot_update_withTrottleCmd(LOCO, speed, true, 0);
 }
 
 void powerOn() {
@@ -39,7 +52,6 @@ void disableDirectionOutput() {
   pinMode(DIRECTION_MOTOR_CHANNEL_PIN_A, INPUT);
   digitalWrite(DIRECTION_MOTOR_CHANNEL_PIN_A, LOW);
 }
-
 
 void configureTimer1() {
   
@@ -64,20 +76,36 @@ void configureTimer1() {
   bitClear(TCCR1B,CS11);
   bitSet(TCCR1B,CS10);
 
- 
-  setCycle();
 
-  // enable interrupt OC1B
+  OCR1A = 20000;
+  OCR1B = 10000;
+
+   // enable interrupt OC1B
   bitSet(TIMSK1, OCIE1B);
 }
 
 ISR(TIMER1_COMPB_vect) {
-  setCycle();
-}
 
-void setCycle() {
-    long full = map(freqPot, 0, 1023, 0, 65535); 
-    long duty = map(dutyPot, 0, 1023, 1, 9);
-    OCR1A = full;
-    OCR1B = full * (10-duty) / 10;
+  if (buffer.nextBit()) {
+
+    // now we need to sent "1"
+    // set OCR0A for next cycle to full cycle of DCC ONE bit
+    // set OCR0B for next cycle to half cycle of DCC ONE bit
+    
+    // OCR0A = DCC_ONE_BIT_TOTAL_DURATION_TIMER0;
+    // OCR0B = DCC_ONE_BIT_PULSE_DURATION_TIMER0;
+    OCR1A = 2000;
+    OCR1B = 1000;
+    
+  } else {
+    // now we need to sent "0"
+    // set OCR0A for next cycle to full cycle of DCC ZERO bit
+    // set OCR0B for next cycle to half cycle of DCC ZERO bit
+    // OCR0A = DCC_ZERO_BIT_TOTAL_DURATION_TIMER0;
+    // OCR0B = DCC_ZERO_BIT_PULSE_DURATION_TIMER0;
+
+    OCR1A = 20000;
+    OCR1B = 10000;  
+  }
+
 }
