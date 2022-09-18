@@ -19,6 +19,7 @@ RefreshBuffer buffer;
 const int SLOT = 0;
 const int LOCO = 77;
 
+byte speed = 0;
 void setup() {
   Serial.begin(115200);
   disableDirectionOutput();
@@ -27,8 +28,7 @@ void setup() {
   pinMode(SPEED_MOTOR_CHANNEL_PIN_A, OUTPUT);  
   pinMode(BRAKE_MOTOR_CHANNEL_PIN_A, OUTPUT);
 
-  //buffer.slot(SLOT).update().withThrottleCmd(LOCO, 0, true, 0);
-  buffer.slot_update_withTrottleCmd(LOCO, 0, true, 0);
+  buffer.slot(0).update().withIdleCmd();
   
   configureTimer1();
   powerOn();
@@ -37,10 +37,12 @@ void setup() {
 void loop() {
   freqPot = analogRead(POT_PIN_FREQ);
   dutyPot = analogRead(POT_PIN_DUTY);
-  long speed = map(freqPot, 15, 1023, 0, 126);
+  long s = map(freqPot, 15, 1023, 0, 126);
   
-  // buffer.slot(SLOT).update().withThrottleCmd(LOCO, speed, true, 0);
-  buffer.slot_update_withTrottleCmd(LOCO, speed, true, 0);
+  if (s != speed) {
+    speed = s;
+    buffer.slot(0).update().withThrottleCmd(LOCO, speed, true, 0);
+  }
 }
 
 void powerOn() {
@@ -87,6 +89,7 @@ void configureTimer1() {
 ISR(TIMER1_COMPB_vect) {
 
   if (buffer.nextBit()) {
+    Serial.println("sign: 1");
 
     // now we need to sent "1"
     // set OCR0A for next cycle to full cycle of DCC ONE bit
@@ -98,6 +101,7 @@ ISR(TIMER1_COMPB_vect) {
     OCR1B = 1000;
     
   } else {
+    Serial.println("sign: 0");
     // now we need to sent "0"
     // set OCR0A for next cycle to full cycle of DCC ZERO bit
     // set OCR0B for next cycle to half cycle of DCC ZERO bit
