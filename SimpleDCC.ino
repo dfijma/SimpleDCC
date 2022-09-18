@@ -41,6 +41,7 @@ void loop() {
   
   if (s != speed) {
     speed = s;
+    Serial.print("speed: "); Serial.println(speed);
     buffer.slot(0).update().withThrottleCmd(LOCO, speed, true, 0);
   }
 }
@@ -82,7 +83,7 @@ void configureTimer1() {
   OCR1A = 20000;
   OCR1B = 10000;
 
-   // enable interrupt OC1B
+  // enable interrupt OC1B
   bitSet(TIMSK1, OCIE1B);
 }
 
