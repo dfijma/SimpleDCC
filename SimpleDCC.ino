@@ -28,7 +28,7 @@ void setup() {
   pinMode(SPEED_MOTOR_CHANNEL_PIN_A, OUTPUT);  
   pinMode(BRAKE_MOTOR_CHANNEL_PIN_A, OUTPUT);
 
-  buffer.slot(0).update().withIdleCmd();
+  buffer.slot(0).update().withIdleCmd().save();
   
   configureTimer1();
   powerOn();
@@ -42,7 +42,7 @@ void loop() {
   if (s != speed) {
     speed = s;
     Serial.print("speed: "); Serial.println(speed);
-    buffer.slot(0).update().withThrottleCmd(LOCO, speed, true, 0);
+    buffer.slot(0).update().withThrottleCmd(LOCO, speed, true, 0).save();
   }
 }
 

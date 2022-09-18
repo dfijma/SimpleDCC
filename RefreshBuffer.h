@@ -13,17 +13,21 @@ class Packet {
     Packet() { reset(); } // initially empty
     boolean getBit(int bit);
     int length() { return buffered * 8; } // length in bits
-    void reset() { buffered = 0; }
+    void reset() { buffered = 0; saved = false; }
     Packet& withIdleCmd();
     Packet& withThrottleCmd(int address, byte speed /* 0..126 */, boolean forward, boolean emergencyStop);
-    
+    void save() { saved = true; }
+    boolean isSaved() { return saved; }
+
   private:
     byte buffer[MAX_CMDS_PACKET*MAX_CMD_ENCODED_SIZE]; // room for max 3 packets of max length 10 bytes encoded
     byte buffered; // number of bytes in the packet
+    boolean saved;
 
     void loadCmd(byte in[], byte nBytes);
     byte loadAddress(byte* buffer, int address);
     Packet& withCmd(int address, byte mask, byte cmdBits);
+
 };
 
 //// A Slot is a combination of an active packet (to be modulated) and an updatable packet (to latch new cmds)
@@ -34,7 +38,7 @@ class Slot {
       activePacket = &packets[0];
       updatePacket = &packets[1];
     } 
-    Packet& update() { updatePacket->reset(); return *updatePacket; } // updatable packet for new cmds
+    Packet& update(); // updatable packet for new cmds
     void flip(); // flip update packet into active
     boolean getBit(int bit) { return activePacket->getBit(bit); }
     int length() { return activePacket->length(); }

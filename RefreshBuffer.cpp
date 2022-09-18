@@ -89,9 +89,14 @@ void Packet::loadCmd(byte in[], byte nBytes) {
 }
 
 //// Slot
-  
+
+Packet& Slot::update() { 
+  updatePacket->reset(); 
+  return *updatePacket;
+} // updatable packet for new cmds
+
 void Slot::flip() {
-  if (updatePacket->length() == 0)  return; // no update
+  if (!updatePacket->isSaved())  return; // no update
   Packet* tmp = activePacket;
   activePacket = updatePacket;
   updatePacket = tmp;
@@ -103,7 +108,7 @@ void Slot::flip() {
 RefreshBuffer::RefreshBuffer() {
   // initially, each active packet is IDLE, each update packet is empty
   for (int i=0; i<SLOTS; ++i) {
-    slots[i].update().withIdleCmd();
+    slots[i].update().withIdleCmd().save();
     slots[i].flip();
   }
   brk = 1; // at least one slot in use 
