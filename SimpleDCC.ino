@@ -13,13 +13,22 @@ const int BRAKE_MOTOR_CHANNEL_PIN_A = 9;
 int freqPot = 0;  // variable to store the value coming from the sensor
 int dutyPot = 0;  // variable to store the value coming from the sensor
 
+// timer values for generating DCC ZERO and DCC ONE bits (ZERO cycle is 2 * 100 nanoseconds, ONE cycle is 2 * 58 microseconds)
+// values for 16 bit timer 1 based on 16Mhz clock and a 1:1 prescale
+#define DCC_ZERO_BIT_TOTAL_DURATION_TIMER1 3199
+#define DCC_ZERO_BIT_PULSE_DURATION_TIMER1 1599
+
+#define DCC_ONE_BIT_TOTAL_DURATION_TIMER1 1855
+#define DCC_ONE_BIT_PULSE_DURATION_TIMER1 927
+
 // The refresh buffer
 RefreshBuffer buffer;
 
 const int SLOT = 0;
-const int LOCO = 77;
+const int LOCO = 4;
 
 byte speed = 0;
+
 void setup() {
   Serial.begin(115200);
   disableDirectionOutput();
@@ -37,11 +46,12 @@ void setup() {
 void loop() {
   freqPot = analogRead(POT_PIN_FREQ);
   dutyPot = analogRead(POT_PIN_DUTY);
-  long s = map(freqPot, 15, 1023, 0, 126);
+  long s = constrain(freqPot, 150, 800);
+  s = map(s, 150, 800, 0, 126);
   
   if (s != speed) {
+    Serial.print(freqPot); Serial.print(" "); Serial.println(speed);
     speed = s;
-    Serial.print("speed: "); Serial.println(speed);
     buffer.slot(0).update().withThrottleCmd(LOCO, speed, true, 0).save();
   }
 }
@@ -80,8 +90,8 @@ void configureTimer1() {
   bitSet(TCCR1B,CS10);
 
 
-  OCR1A = 20000;
-  OCR1B = 10000;
+  OCR1A = DCC_ONE_BIT_TOTAL_DURATION_TIMER1;
+  OCR1B = DCC_ONE_BIT_PULSE_DURATION_TIMER1;
 
   // enable interrupt OC1B
   bitSet(TIMSK1, OCIE1B);
@@ -90,27 +100,18 @@ void configureTimer1() {
 ISR(TIMER1_COMPB_vect) {
 
   if (buffer.nextBit()) {
-    Serial.println("sign: 1");
-
     // now we need to sent "1"
     // set OCR0A for next cycle to full cycle of DCC ONE bit
     // set OCR0B for next cycle to half cycle of DCC ONE bit
-    
-    // OCR0A = DCC_ONE_BIT_TOTAL_DURATION_TIMER0;
-    // OCR0B = DCC_ONE_BIT_PULSE_DURATION_TIMER0;
-    OCR1A = 2000;
-    OCR1B = 1000;
+    OCR1A = DCC_ONE_BIT_TOTAL_DURATION_TIMER1;
+    OCR1B = DCC_ONE_BIT_PULSE_DURATION_TIMER1;
     
   } else {
-    Serial.println("sign: 0");
     // now we need to sent "0"
     // set OCR0A for next cycle to full cycle of DCC ZERO bit
     // set OCR0B for next cycle to half cycle of DCC ZERO bit
-    // OCR0A = DCC_ZERO_BIT_TOTAL_DURATION_TIMER0;
-    // OCR0B = DCC_ZERO_BIT_PULSE_DURATION_TIMER0;
-
-    OCR1A = 20000;
-    OCR1B = 10000;  
+    OCR1A = DCC_ZERO_BIT_TOTAL_DURATION_TIMER1;
+    OCR1B = DCC_ZERO_BIT_PULSE_DURATION_TIMER1;  
   }
 
 }

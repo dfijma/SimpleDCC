@@ -13,16 +13,16 @@ class Packet {
     Packet() { reset(); } // initially empty
     boolean getBit(int bit);
     int length() { return buffered * 8; } // length in bits
-    void reset() { buffered = 0; saved = false; }
+    void reset() { buffered = 0; dirty = true; }
     Packet& withIdleCmd();
     Packet& withThrottleCmd(int address, byte speed /* 0..126 */, boolean forward, boolean emergencyStop);
-    void save() { saved = true; }
-    boolean isSaved() { return saved; }
+    void save() { dirty = false; }
+    boolean isDirty() { return dirty; }
 
   private:
     byte buffer[MAX_CMDS_PACKET*MAX_CMD_ENCODED_SIZE]; // room for max 3 packets of max length 10 bytes encoded
     byte buffered; // number of bytes in the packet
-    boolean saved;
+    boolean dirty;
 
     void loadCmd(byte in[], byte nBytes);
     byte loadAddress(byte* buffer, int address);

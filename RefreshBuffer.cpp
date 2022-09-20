@@ -5,13 +5,13 @@
 static const byte mask[] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01}; // precalculated masks to get a bit
 
 boolean Packet::getBit(int bit) {
-  Serial.print("getb: "); Serial.print((long)this); Serial.print(" "); 
-  for (int i = 0; i<buffered; ++i) {
-    Serial.print(buffer[i], BIN); Serial.print("_");
-  }
-  Serial.print(" ");Serial.print(bit);
+  //Serial.print("getb: "); Serial.print((long)this); Serial.print(" "); 
+  //for (int i = 0; i<buffered; ++i) {
+  //  Serial.print(buffer[i], BIN); Serial.print("_");
+  //}
+  //Serial.print(" ");Serial.print(bit);
   boolean res = buffer[bit / 8] & mask[bit % 8];
-  Serial.print("->"); Serial.println(res);
+  //Serial.print("->"); Serial.println(res);
   return res;
 }
 
@@ -85,7 +85,6 @@ void Packet::loadCmd(byte in[], byte nBytes) {
       } 
     } 
   } 
-  Serial.print("cmd loaded: packet length="); Serial.println(buffered);
 }
 
 //// Slot
@@ -96,7 +95,7 @@ Packet& Slot::update() {
 } // updatable packet for new cmds
 
 void Slot::flip() {
-  if (!updatePacket->isSaved())  return; // no update
+  if (updatePacket->isDirty())  return; // no complete update yet
   Packet* tmp = activePacket;
   activePacket = updatePacket;
   updatePacket = tmp;
